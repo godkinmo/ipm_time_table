@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>理工課表查詢</title>
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.5.0/css/bulma.min.css" />
+  <link href="css/bulma.min.css" rel="stylesheet" />
   <link href='css/fullcalendar.min.css' rel='stylesheet' />
   <link href='css/fullcalendar.print.min.css' rel='stylesheet' media='print' />
   <style>
@@ -26,6 +27,16 @@
     .tabs.is-toggle li.is-active a {
       background: #3273dc;
     }
+
+    .search-box {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    #main {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
@@ -36,6 +47,11 @@
           <div class="message-header">
             <h1>理工課表查詢</h1>
             <span class="tag is-white is-rounded">Test v0.9</span>
+          </div>
+          <div class="message-body">
+            <small>測試版本，僅作參考 <a href="https://wapps.ipm.edu.mo/siweb/time_prog.asp">官方查詢</a></small>
+            <br>
+            <small><a href="https://github.com/godkinmo/ipm_time_table">最後更新日期，2017-08-07</a></small>
           </div>
         </div>
       </div>
@@ -50,104 +66,132 @@
     </div>
 
     <div class="columns is-centered">
-      <div class="column is-6">
-        <div class="field is-horizontal">
-          <div class="field-body">
-            <div class="field-label is-normal">
-              <label class="label">課程</label>
+      <div class="column is-2">
+        <div class="field">
+          <p class="help">年度／學期</p>
+          <div class="control">
+            <div class="select">
+              <select v-model.number="form.yearSem">
+                <option>2017/2018-1</option>
+              </select>
             </div>
-            <div class="field">
-              <div class="control">
-                <div class="select">
-                  <select v-for="(school, index) in schools" v-if="index==form.schoolIndex" v-model.number="form.programIndex" >
-                    <option v-for="(program, index2) in school.programs" :value="index2">{{ program.name }}</option>
-                  </select>
-                </div>
-              </div>
+          </div>
+        </div>
+      </div>
+      <div class="column is-4">
+        <div class="field">
+          <p class="help">課程</p>
+          <div class="control">
+            <div class="select">
+              <select v-for="(school, index) in schools" v-if="index==form.schoolIndex" v-model.number="form.programIndex" >
+                <option v-for="(program, index2) in school.programs" :value="index2">{{ program.name }}</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
       <div class="column is-2">
-        <div class="field is-horizontal">
-          <div class="field-body">
-            <div class="field-label is-normal">
-              <label class="label">年級</label>
-            </div>
-            <div class="field">
-              <div class="control">
-                <div class="select">
-                  <select v-model.number="form.year">
-                    <option value=""></option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                  </select>
-                </div>
-              </div>
+        <div class="field">
+          <p class="help">年級</p>
+          <div class="control">
+            <div class="select">
+              <select v-model.number="form.classYear">
+                <option value=""></option>
+                <option v-for="i in 4" :value="i">{{ i }}</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
       <div class="column is-2">
-        <div class="field is-horizontal">
-          <div class="field-body">
-            <div class="field-label is-normal">
-              <label class="label">班別</label>
-            </div>
-            <div class="field">
-              <div class="control">
-                <div class="select">
-                  <select v-for="(school, index) in schools" v-if="index==form.schoolIndex" v-model="form.classNum">
-                    <option value=""></option>
-                    <option v-show="isShowClass(index2)" v-for="(program, index2) in school.programs[form.programIndex].result" :value="index2">{{ index2 }}</option>
-                  </select>
-                </div>
-              </div>
+        <div class="field">
+          <p class="help">班別</p>
+          <div class="control">
+            <div class="select">
+              <select v-for="(school, index) in schools" v-if="index==form.schoolIndex" v-model="form.classNum">
+                <option value=""></option>
+                <option v-show="isShowClass(index2)" v-for="(program, index2) in school.programs[form.programIndex].result" :value="index2">{{ index2 }}</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
+      <div class="column is-1">
+        <label for="color" class="help">顏色開關</label>
+        <label class="checkbox">
+          <input id="color" type="checkbox" v-model="programDiffColor">
+        </label>
+      </div>
+      <div class="column is-1 search-box">
+        <button @click="search" class="button is-info">搜尋</button>
+      </div>
     </div>
 
-    <div class="columns is-centered">
-      <button @click="search" class="button is-info">搜尋</button>
-    </div>
-
-    <section class="section" id="main">
+    <div id="main">
       <div id="calendar"></div>
-    </section>
+    </div>
   </div>
 
   <footer class="footer">
-      <div class="has-text-centered">© 2017 by <strong>Godkin</strong></div>
+      <div class="has-text-centered">© 2017 by <a href="#"><strong>Godkin</strong></a></div>
   </footer>
 </body>
 
 <script src='js/moment.min.js'></script>
 <script src='js/jquery.min.js'></script>
 <script src='js/fullcalendar.min.js'></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.2/axios.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/vue.min.js"></script>
 
 <script>
-// $(function() {
+$(function() {
+  // https://stackoverflow.com/questions/3426404/create-a-hexadecimal-colour-based-on-a-string-with-javascript
+  function hashCode(str) { // java String#hashCode
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+         hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return hash;
+  }
+  function intToRGB(i){
+      var c = (i & 0x00FFFFFF)
+          .toString(16)
+          .toUpperCase();
+
+      return "00000".substring(0, 6 - c.length) + c;
+  }
+
   var app = new Vue({
     el: '#app',
     data: {
+      programDiffColor: false,
       schools: [],
       form: {
         schoolIndex: 3,
         programIndex: 6,
-        year: '',
+        classYear: '',
+        yearSem: '2017/2018-1',
         classNum: '',
       },
+      events: [],
+      specialEvents: [
+        {title: '開學禮', start: '2017-08-18', color: 'hsl(348, 100%, 61%)'}, {start: '2017-08-18', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '開學', start: '2017-08-21', color: 'hsl(348, 100%, 61%)'}, {start: '2017-08-21', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '國慶節', start: '2017-10-01', color: 'hsl(348, 100%, 61%)'}, {start: '2017-10-01', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '國慶節翌日', start: '2017-10-02', color: 'hsl(348, 100%, 61%)'}, {start: '2017-10-02', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '中秋節翌日', start: '2017-10-05', color: 'hsl(348, 100%, 61%)'}, {start: '2017-10-05', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '重陽節', start: '2017-10-28', color: 'hsl(348, 100%, 61%)'}, {start: '2017-10-28', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '重陽節後首個工作日', start: '2017-10-30', color: 'hsl(348, 100%, 61%)'}, {start: '2017-10-30', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '追思節', start: '2017-11-02', color: 'hsl(348, 100%, 61%)'}, {start: '2017-11-02', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '課堂結束', start: '2017-11-27', color: 'hsl(348, 100%, 61%)'}, {start: '2017-11-27', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+        {title: '複習/補課', start: '2017-11-28', end: '2017-12-05', color: 'hsl(348, 100%, 61%)'}, {start: '2017-11-28', end: '2017-12-05', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
+      ],
     },
     mounted() {
       axios.get('result.json').then((response)=>{
         this.schools = response.data
         this.reset()
+        this.renderCalendar()
       })
     },
     methods: {
@@ -159,22 +203,32 @@
         }
       },
       reset() {
+        this.events.length = 0;
+        for (let i of this.specialEvents) {
+          this.events.push(i)
+        }
         $('#calendar').remove()
         $('#main').append($('<div id="calendar"></div>'))
+      },
+      renderCalendar() {
         $('#calendar').fullCalendar({
           header: {
             left: 'prev,next today',
             center: 'title',
             right: 'month,agendaWeek,basicDay'
           },
+          minTime: '09:00',
+          // defaultDate: '2017-01-05',
           navLinks: true, // can click day/week names to navigate views
           editable: true,
           eventLimit: true, // allow "more" link when too many events
+          fixedWeekCount: false,
+          events: this.events,
         })
       },
       search() {
         this.reset()
-        var events = [];
+
         var school = this.schools[this.form.schoolIndex].programs[this.form.programIndex]
 
         if (this.form.classNum != '') {
@@ -183,7 +237,7 @@
             var startDate = moment(obj.startDate.replace(/\//g, "-"), 'YYYY-MM-DD')
             var endDate = moment(obj.endDate.replace(/\//g, "-"), 'YYYY-MM-DD')
 
-            if (this.form.year != '' && obj.year != this.form.year) continue
+            if (this.form.classYear != '' && obj.year != this.form.classYear) continue
 
             if (obj.endDate != '') {
               for (
@@ -192,20 +246,20 @@
                 j = j.add(1,'day'))
               {
                 if ($.inArray(j.day(), obj.days) >= 0) {
-                  events.push({
-                    title: obj.name,
+                  this.events.push({
+                    title: obj.name + '\n' +obj.room,
                     start: j.format('YYYY-MM-DD')+'T'+obj.startTime,
                     end: j.format('YYYY-MM-DD')+'T'+obj.endTime,
-                    color: '#000000'
+                    color: this.programDiffColor ? '#'+intToRGB(hashCode(obj.name)) : 'hsl(0, 0%, 21%)'
                   })
                 }
               }
             } else {
-              events.push({
-                title: obj.name,
+              this.events.push({
+                title: obj.name + '\n' +obj.room,
                 start: startDate.format('YYYY-MM-DD')+'T'+obj.startTime,
                 end: startDate.format('YYYY-MM-DD')+'T'+obj.endTime,
-                color: '#257e4a'
+                color: 'hsl(171, 100%, 41%)'
               })
             }
           }
@@ -216,7 +270,7 @@
               var startDate = moment(obj.startDate.replace(/\//g, "-"), 'YYYY-MM-DD')
               var endDate = moment(obj.endDate.replace(/\//g, "-"), 'YYYY-MM-DD')
 
-              if (this.form.year != '' && obj.year != this.form.year) continue
+              if (this.form.classYear != '' && obj.year != this.form.classYear) continue
 
               if (obj.endDate != '') {
                 for (
@@ -225,20 +279,20 @@
                   j = j.add(1,'day'))
                 {
                   if ($.inArray(j.day(), obj.days) >= 0) {
-                    events.push({
-                      title: obj.name,
+                    this.events.push({
+                      title: obj.name + '\n' +obj.room,
                       start: j.format('YYYY-MM-DD')+'T'+obj.startTime,
                       end: j.format('YYYY-MM-DD')+'T'+obj.endTime,
-                      color: '#000000'
+                      color: this.programDiffColor ? '#'+intToRGB(hashCode(obj.name)) : 'hsl(0, 0%, 21%)'
                     })
                   }
                 }
               } else {
-                events.push({
-                  title: obj.name,
+                this.events.push({
+                  title: obj.name + '\n' +obj.room,
                   start: startDate.format('YYYY-MM-DD')+'T'+obj.startTime,
                   end: startDate.format('YYYY-MM-DD')+'T'+obj.endTime,
-                  color: '#257e4a'
+                  color: 'hsl(171, 100%, 41%)'
                 })
               }
             }
@@ -247,31 +301,19 @@
 
         $('#calendar').remove()
         $('#main').append($('<div id="calendar"></div>'))
-
-        $('#calendar').fullCalendar({
-          header: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'month,agendaWeek,basicDay'
-          },
-          defaultDate: '2017-01-05',
-          navLinks: true, // can click day/week names to navigate views
-          editable: true,
-          eventLimit: true, // allow "more" link when too many events
-          events: events
-        })
+        this.renderCalendar()
       },
       isShowClass(classNum) {
-        if (this.form.year == '') {
+        if (this.form.classYear == '') {
           return true
         } else {
-          if (classNum.substring(0,1) == this.form.year)
+          if (classNum.substring(0,1) == this.form.classYear)
             return true
           return false
         }
       }
     }
   })
-// });
+});
 </script>
 </html>

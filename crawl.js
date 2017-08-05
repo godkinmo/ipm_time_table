@@ -101,7 +101,7 @@ for (let x in schools) {
         p_curso: schools[x].programs[y].code, // 課程,
         p_sp_year: '', // 年級 1~4
         p_ling: '', // 語言,
-        p_year_sem: '2016/2017-2', // 年度/學期
+        p_year_sem: '2017/2018-1', // 年度/學期
         p_class_code: '', // 班別編號 22121,22221
         action: 'search',
         la: 'ch', // 語言 英文-'en', 中文-'ch'
