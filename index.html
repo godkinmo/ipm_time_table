@@ -11,61 +11,93 @@
   <style>
     body {
       margin: 0;
-      padding: 0;
       margin-top: 20px;
     }
-
     #calendar {
       max-width: 900px;
       margin: 0 auto;
     }
-
     [v-cloak] {
       display: none;
     }
-
     .tabs.is-toggle li.is-active a {
       background: #3273dc;
     }
-
     .search-box {
       display: flex;
       justify-content: center;
       align-items: flex-end;
     }
-
     #main {
       margin-bottom: 20px;
+    }
+    #courses {
+      display: block;
+    }
+    #courses-mobile {
+      display: none;
+    }
+
+
+    @media screen and (max-width: 700px) {
+      #app {
+        padding: 0 15px;
+      }
+      #courses {
+        display: none;
+      }
+      #courses-mobile {
+        display: block;
+      }
+      #search-options > div:nth-child(n+3) {
+        display: inline-block;
+      }
+      #search-options > div:nth-child(n+6){
+        width: 50%;
+        float: left;
+        display: block;
+      }
     }
   </style>
 </head>
 <body>
   <div id="app" class="container" v-cloak>
-    <div class="columns is-mobile is-centered">
-      <div class="column is-half">
-        <div class="message is-dark">
-          <div class="message-header">
-            <h1>理工課表查詢</h1>
-            <span class="tag is-white is-rounded">Test v0.9</span>
-          </div>
-          <div class="message-body">
-            <small>測試版本，僅作參考 <a href="https://wapps.ipm.edu.mo/siweb/time_prog.asp">官方查詢</a></small>
-            <br>
-            <small><a href="https://github.com/godkinmo/ipm_time_table">最後更新日期，2017-08-07</a></small>
-          </div>
-        </div>
+    <div class="message is-dark">
+      <div class="message-header">
+        <h1>理工課表查詢</h1>
+        <span class="tag is-white is-rounded">Test v0.91</span>
+      </div>
+      <div class="message-body">
+        <small>測試版本，僅作參考 <a href="https://wapps.ipm.edu.mo/siweb/time_prog.asp">官方查詢</a></small>
+        <br>
+        <small><a href="https://github.com/godkinmo/ipm_time_table">最後更新日期，2017-08-19</a></small>
       </div>
     </div>
 
-    <div class="tabs is-toggle is-centered">
+    <div id="courses" class="tabs is-toggle is-centered">
       <ul>
         <li v-for="(school, index) in schools" :class="{'is-active': index==form.schoolIndex}">
           <a @click="changeSchoolIndex(index)">{{school.name}}</a>
         </li>
       </ul>
     </div>
+    <div id="courses-mobile">
+      <div class="field">
+        <p class="help">學校</p>
+        <div class="control">
+          <div class="select">
+            <select v-model.number="form.schoolIndex" @change="changeSchoolIndex2()">
+              <option v-for="(school, index) in schools" :value="index">
+                {{ school.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <br>
+    </div>
 
-    <div class="columns is-centered">
+    <div id="search-options" class="columns is-centered">
       <div class="column is-2">
         <div class="field">
           <p class="help">年度／學期</p>
@@ -90,7 +122,7 @@
           </div>
         </div>
       </div>
-      <div class="column is-2">
+      <div class="column is-1">
         <div class="field">
           <p class="help">年級</p>
           <div class="control">
@@ -124,6 +156,14 @@
       </div>
       <div class="column is-1 search-box">
         <button @click="search" class="button is-info">搜尋</button>
+      </div>
+      <div class="column is-1 search-box">
+        <div class="field">
+          <p class="help">Google CSV</p>
+          <div class="control">
+            <button @click="exportCsv" class="button is-warning">匯出</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -174,6 +214,8 @@ $(function() {
         classNum: '',
       },
       events: [],
+      csvEncodeUri: 'data:text/csv;charset=utf-8,',
+      csvContent: '',
       specialEvents: [
         {title: '開學禮', start: '2017-08-18', color: 'hsl(348, 100%, 61%)'}, {start: '2017-08-18', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
         {title: '開學', start: '2017-08-21', color: 'hsl(348, 100%, 61%)'}, {start: '2017-08-21', rendering: 'background', color: 'hsl(348, 100%, 61%)'},
@@ -202,9 +244,29 @@ $(function() {
           this.form.classNum = ''
         }
       },
+      changeSchoolIndex2() {
+        this.form.programIndex = 0
+        this.form.classNum = ''
+      },
       reset() {
-        this.events.length = 0;
+        // CSV Format
+        // header: Subject, Start Date, Start time, End Date, End Time, All Day Event, Location
+        // row: 期末考,05/30/2020, 10:00 AM, 05/30/2020, 1:00 PM, False, Location
+        this.events.length = 0
+        this.csvContent = 'Subject, Start Date, Start time, End Date, End Time, All Day Event, Location\n'
         for (let i of this.specialEvents) {
+          if (i.title != null) {
+            let r = {
+              subject: i.title,
+              startDate: moment(i.start, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+              startTime: '',
+              endDate: '',
+              endTime: '',
+              allDayEvent: 'True',
+              location: ''
+            }
+            this.csvContent += r.subject + ',' + r.startDate + ',' + r.startTime + ',' + r.endDate + ',' + r.endTime + ',' + r.allDayEvent + ',' + r.location + '\n'
+          }
           this.events.push(i)
         }
         $('#calendar').remove()
@@ -218,7 +280,7 @@ $(function() {
             right: 'month,agendaWeek,basicDay'
           },
           minTime: '09:00',
-          // defaultDate: '2017-01-05',
+          defaultDate: '2017-08-21',
           navLinks: true, // can click day/week names to navigate views
           editable: true,
           eventLimit: true, // allow "more" link when too many events
@@ -246,6 +308,21 @@ $(function() {
                 j = j.add(1,'day'))
               {
                 if ($.inArray(j.day(), obj.days) >= 0) {
+                  // CSV Format
+                  // header: Subject, Start Date, Start time, End Date, End Time, All Day Event, Location
+                  // row: 期末考,05/30/2020, 10:00 AM, 05/30/2020, 1:00 PM, False, Location
+                  if (obj.name != null) {
+                    let r = {
+                      subject: obj.name,
+                      startDate: j.format('MM/DD/YYYY'),
+                      startTime: obj.startTime + ' ' + (obj.startTime > '12:00' ? 'PM' : 'AM'),
+                      endDate: j.format('MM/DD/YYYY'),
+                      endTime: obj.endTime + ' ' + (obj.endTime > '12:00' ? 'PM' : 'AM'),
+                      allDayEvent: 'False',
+                      location: obj.room,
+                    }
+                    this.csvContent += r.subject + ',' + r.startDate + ',' + r.startTime + ',' + r.endDate + ',' + r.endTime + ',' + r.allDayEvent + ',' + r.location + '\n'
+                  }
                   this.events.push({
                     title: obj.name + '\n' +obj.room,
                     start: j.format('YYYY-MM-DD')+'T'+obj.startTime,
@@ -255,6 +332,21 @@ $(function() {
                 }
               }
             } else {
+              // CSV Format
+              // header: Subject, Start Date, Start time, End Date, End Time, All Day Event, Location
+              // row: 期末考,05/30/2020, 10:00 AM, 05/30/2020, 1:00 PM, False, Location
+              if (obj.name != null) {
+                let r = {
+                  subject: obj.name,
+                  startDate: startDate.format('MM/DD/YYYY'),
+                  startTime: obj.startTime + ' ' + (obj.startTime > '12:00' ? 'PM' : 'AM'),
+                  endDate: startDate.format('MM/DD/YYYY'),
+                  endTime: obj.endTime + ' ' + (obj.endTime > '12:00' ? 'PM' : 'AM'),
+                  allDayEvent: 'False',
+                  location: obj.room,
+                }
+                this.csvContent += r.subject + ',' + r.startDate + ',' + r.startTime + ',' + r.endDate + ',' + r.endTime + ',' + r.allDayEvent + ',' + r.location + '\n'
+              }
               this.events.push({
                 title: obj.name + '\n' +obj.room,
                 start: startDate.format('YYYY-MM-DD')+'T'+obj.startTime,
@@ -279,6 +371,21 @@ $(function() {
                   j = j.add(1,'day'))
                 {
                   if ($.inArray(j.day(), obj.days) >= 0) {
+                    // CSV Format
+                    // header: Subject, Start Date, Start time, End Date, End Time, All Day Event, Location
+                    // row: 期末考,05/30/2020, 10:00 AM, 05/30/2020, 1:00 PM, False, Location
+                    if (obj.name != null) {
+                      let r = {
+                        subject: obj.name,
+                        startDate: j.format('MM/DD/YYYY'),
+                        startTime: obj.startTime + ' ' + (obj.startTime > '12:00' ? 'PM' : 'AM'),
+                        endDate: j.format('MM/DD/YYYY'),
+                        endTime: obj.endTime + ' ' + (obj.endTime > '12:00' ? 'PM' : 'AM'),
+                        allDayEvent: 'False',
+                        location: obj.room,
+                      }
+                      this.csvContent += r.subject + ',' + r.startDate + ',' + r.startTime + ',' + r.endDate + ',' + r.endTime + ',' + r.allDayEvent + ',' + r.location + '\n'
+                    }
                     this.events.push({
                       title: obj.name + '\n' +obj.room,
                       start: j.format('YYYY-MM-DD')+'T'+obj.startTime,
@@ -288,6 +395,22 @@ $(function() {
                   }
                 }
               } else {
+                // CSV Format
+                // header: Subject, Start Date, Start time, End Date, End Time, All Day Event, Location
+                // row: 期末考,05/30/2020, 10:00 AM, 05/30/2020, 1:00 PM, False, Location
+                if (obj.name != null) {
+                  let r = {
+                    subject: obj.name,
+                    startDate: startDate.format('MM/DD/YYYY'),
+                    startTime: obj.startTime + ' ' + (obj.startTime > '12:00' ? 'PM' : 'AM'),
+                    endDate: startDate.format('MM/DD/YYYY'),
+                    endTime: obj.endTime + ' ' + (obj.endTime > '12:00' ? 'PM' : 'AM'),
+                    allDayEvent: 'False',
+                    location: obj.room,
+                  }
+                  console.log(r.startTime)
+                  this.csvContent += r.subject + ',' + r.startDate + ',' + r.startTime + ',' + r.endDate + ',' + r.endTime + ',' + r.allDayEvent + ',' + r.location + '\n'
+                }
                 this.events.push({
                   title: obj.name + '\n' +obj.room,
                   start: startDate.format('YYYY-MM-DD')+'T'+obj.startTime,
@@ -311,6 +434,9 @@ $(function() {
             return true
           return false
         }
+      },
+      exportCsv() {
+        window.open(encodeURI(this.csvEncodeUri+this.csvContent), '_self')
       }
     }
   })
