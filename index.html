@@ -68,6 +68,10 @@
         <span class="tag is-white is-rounded">Test v0.91</span>
       </div>
       <div class="message-body">
+        <div class="notification is-info">
+          添加功能，匯出成 CSV 格式（用於 google calendar 導入) - 先按條件搜尋完再匯出
+        </div>
+
         <small>測試版本，僅作參考 <a href="https://wapps.ipm.edu.mo/siweb/time_prog.asp">官方查詢</a></small>
         <br>
         <small><a href="https://github.com/godkinmo/ipm_time_table">最後更新日期，2017-08-19</a></small>
@@ -207,8 +211,8 @@ $(function() {
       programDiffColor: false,
       schools: [],
       form: {
-        schoolIndex: 3,
-        programIndex: 6,
+        schoolIndex: 0,
+        programIndex: 0,
         classYear: '',
         yearSem: '2017/2018-1',
         classNum: '',
