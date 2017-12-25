@@ -1,7 +1,7 @@
 # 理工課表查詢
 
 ## 最新版鏈結
-> https://cdn.rawgit.com/godkinmo/ipm_time_table/62c3a51c/index.html
+> https://cdn.rawgit.com/godkinmo/ipm_time_table/f349270d/index.html
 
 > 測試版本，僅作參考
 > 官方link: https://wapps.ipm.edu.mo/siweb/time_prog.asp
