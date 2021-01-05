@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "axios": "^0.16.2",
+    "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.2",
     "fs": "^0.0.1-security",
     "https": "^1.0.0",
